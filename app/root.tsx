@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { ClientOnly } from "./components/ClientOnly";
+import { Loading } from "./components/Loading";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -33,7 +35,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <ClientOnly fallback={<Loading message="Loading your experience..." />}>
+          {children}
+        </ClientOnly>
         <ScrollRestoration />
         <Scripts />
       </body>
