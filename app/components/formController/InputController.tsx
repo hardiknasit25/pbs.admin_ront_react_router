@@ -5,14 +5,10 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form";
+import { FieldError } from "~/components/ui/field";
 import { Input } from "~/components/ui/input";
-import {
-  Field,
-  FieldLabel,
-  FieldError,
-  FieldDescription,
-} from "~/components/ui/field";
 import { cn } from "~/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 
 export interface InputControllerProps<
   TFieldValues extends FieldValues = FieldValues,
@@ -28,6 +24,7 @@ export interface InputControllerProps<
   disabled?: boolean;
   required?: boolean;
   orientation?: "vertical" | "horizontal" | "responsive";
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export function InputController<
@@ -49,7 +46,16 @@ export function InputController<
   disabled,
   required,
   orientation = "vertical",
+  icon: Icon,
 }: InputControllerProps<TFieldValues, TName>) {
+  const [showPassword, setShowPassword] = React.useState(false);
+  const isPasswordField = type === "password";
+  const inputType = isPasswordField && showPassword ? "text" : type;
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <Controller
       name={name}
@@ -62,45 +68,70 @@ export function InputController<
         const hasError = !!error;
 
         return (
-          <Field
+          <div
             className={cn(className)}
-            orientation={orientation}
             data-invalid={hasError}
             data-disabled={disabled}
           >
             {label && (
-              <FieldLabel htmlFor={name} className={labelClassName}>
+              <label htmlFor={name} className={labelClassName}>
                 {label}
                 {required && <span className="text-destructive ml-0.5">*</span>}
-              </FieldLabel>
+              </label>
             )}
 
             <div className="flex flex-col gap-1.5 w-full">
-              <Input
-                {...field}
-                id={name}
-                type={type}
-                placeholder={placeholder}
-                disabled={disabled}
-                aria-invalid={hasError}
-                aria-describedby={
-                  description || error
-                    ? `${name}-description ${name}-error`
-                    : undefined
-                }
-                className={cn(inputClassName)}
-                value={field.value ?? ""}
-              />
+              <div className="relative">
+                {Icon && (
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                )}
+                <Input
+                  {...field}
+                  id={name}
+                  type={inputType}
+                  placeholder={placeholder}
+                  disabled={disabled}
+                  aria-invalid={hasError}
+                  aria-describedby={
+                    description || error
+                      ? `${name}-description ${name}-error`
+                      : undefined
+                  }
+                  className={cn(
+                    Icon && "pl-10",
+                    isPasswordField && "pr-10",
+                    inputClassName
+                  )}
+                  value={field.value ?? ""}
+                />
+                {isPasswordField && (
+                  <button
+                    type="button"
+                    onClick={togglePasswordVisibility}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                )}
+              </div>
 
               {description && !hasError && (
-                <FieldDescription id={`${name}-description`}>
-                  {description}
-                </FieldDescription>
+                <p id={`${name}-description`}>{description}</p>
               )}
 
               {hasError && <FieldError id={`${name}-error`} errors={[error]} />}
             </div>
-          </Field>
+          </div>
         );
       }}
     />
