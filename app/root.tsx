@@ -11,6 +11,31 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { ClientOnly } from "./components/ClientOnly";
 import { Loading } from "./components/Loading";
+import { redirect } from "react-router";
+import cookieService from "./services/cookie.service";
+import { TOKEN } from "./utils/constant";
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // Get cookies from request header
+  const cookieHeader = request.headers.get("Cookie");
+  const cookies = cookieService.parseCookiesFromHeader(cookieHeader);
+  const token = cookies[TOKEN];
+
+  // If user is not on login page and doesn't have a token, redirect to login
+  if (pathname !== "/login" && !token) {
+    return redirect("/login");
+  }
+
+  // If user is on login page and has a token, redirect to home
+  if (pathname === "/login" && token) {
+    return redirect("/");
+  }
+
+  return null;
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
